@@ -1,0 +1,29 @@
+name: Harrods monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # кожні 5 хв (GitHub може запускати із затримкою)
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Надіслати тестове повідомлення зі статусом"
+        type: boolean
+        default: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m playwright install --with-deps chromium
+      - run: python monitor.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEST_MODE: ${{ github.event.inputs.test }}
